@@ -1,26 +1,28 @@
-CC = gcc 
-CFLAGS = -g -I/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT -pedantic -W -Wall -Wextra
+CC = gcc
+CPPFLAGS = -Iinclude -D_GNU_SOURCE=1 -D_REENTRANT
+CFLAGS = -g -pedantic -W -Wall -Wextra
 LDLIBS = -lSDL -lpthread -lm
 
-SRC = main.c audio.c
-OBJ = $(SRC:.c=.o)
+OBJ = src/main.o src/audio.o
+BIN = main
 
-all: main
+SAMPLES_DIR = ./samples
 
-tetris:
-	./main ./samples/tetris.txt
-
-detail:
-	./main ./samples/details.txt
-
-instru:
-	./main ./samples/instruments.txt
-
-main: $(OBJ)
+all: $(BIN)
 
 $(BIN): $(OBJ)
+	$(CC) $(LDLIBS) $(OBJ) -o $(BIN)
 
 clean:
-	$(RM) $(OBJ) main
+	$(RM) $(BIN) $(OBJ)
+
+tetris: $(BIN)
+	./$(BIN) $(SAMPLES_DIR)/tetris.txt
+
+detail: $(BIN)
+	./$(BIN) $(SAMPLES_DIR)/details.txt
+
+instru: $(BIN)
+	./$(BIN) $(SAMPLES_DIR)/instruments.txt
 
 .PHONY : all clean tetris instru detail
