@@ -5,6 +5,7 @@ LDLIBS = -lSDL -lpthread -lm
 
 OBJ = src/main.o        \
       src/audio.o       \
+      src/instruments.o \
       src/notes.o       \
       src/sdl_helpers.o
 

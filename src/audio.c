@@ -2,6 +2,7 @@
 
 #include <SDL/SDL.h>
 
+#include "instruments.h"
 #include "notes.h"
 #include "sdl_helpers.h"
 
@@ -57,35 +58,8 @@ static void audio_callback(void *udata, Uint8 *stream, int len)
             if(chunk->channels[j]->length > chunk->pos)
             {
                 float freq = chunk->channels[j]->notes[chunk->pos];
-                float s;
-                switch(chunk->channels[j]->instrument)
-                {
-                case 0:
-                    s = ampl * sinf(M_PI*freq*pos/44100.f);
-                    break;
-                case 1:
-                    {
-                        float env = 1.f - pos/44100.f;
-                        env *= 1.f + 0.1f * sinf(10.f*M_PI*pos/44100.f);
-                        s = env * sinf(M_PI*freq*pos/44100.f);
-                    }
-                    break;
-                case 2:
-                    s = sinf(M_PI*freq*pos/44100.f) - 0.3f
-                      + sinf(2.f*M_PI*freq*pos/44100.f) * 0.2f
-                      + sinf(3.f*M_PI*freq*pos/44100.f) * 0.3f
-                      + sinf(4.f*M_PI*freq*pos/44100.f) * 0.2f;
-                    s *= sinf(M_PI*pos/44100.f);
-                    s *= 1.f + 0.1f * sinf(2.f*M_PI*pos/44100.f);
-                    s *= ampl;
-                    break;
-                case 3:
-                    s = fmodf(2.f*freq*pos/44100.f, 2);
-                    if(s > 1.f)
-                        s = 1.f - s;
-                    s -= .5f;
-                    break;
-                }
+                int index = chunk->channels[j]->instrument;
+                float s = instruments[index](freq, pos, ampl);
                 stream[i] += (int)(chunk->channels[j]->volume/2.f * s);
             }
         }
