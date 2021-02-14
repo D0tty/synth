@@ -5,6 +5,7 @@
 #include "instruments.h"
 #include "notes.h"
 #include "sdl_helpers.h"
+#include "values.h"
 
 static int g_debug = 0;
 
@@ -60,13 +61,13 @@ static void audio_callback(void *udata, Uint8 *stream, int len)
                 float freq = chunk->channels[j]->notes[chunk->pos];
                 int index = chunk->channels[j]->instrument;
                 float s = instruments[index](freq, pos, ampl);
-                stream[i] += (int)(chunk->channels[j]->volume/2.f * s);
+                stream[i] += (Uint8)(chunk->channels[j]->volume/2.f * s);
             }
         }
-        ampl *= 0.9999;
+        ampl *= AMPL_REDUCTION;
 
         pos++;
-        if(pos >= 44100)
+        if(pos >= FREQUENCY)
         {
             ampl = 1.0;
             pos = 0;

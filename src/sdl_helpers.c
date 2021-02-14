@@ -2,12 +2,14 @@
 
 #include <SDL/SDL.h>
 
+#include "values.h"
+
 int init_sdl_stream(audio_callback_t callback, void* user_data)
 {
     SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER);
 
     SDL_AudioSpec audiospec;
-    audiospec.freq = 44100;
+    audiospec.freq = FREQUENCY;
     audiospec.format = AUDIO_S16SYS;
     audiospec.channels = 2;
     audiospec.samples = 1024;
