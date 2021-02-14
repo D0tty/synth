@@ -1,5 +1,8 @@
-#include <SDL/SDL.h>
 #include <math.h>
+
+#include <SDL/SDL.h>
+
+#include "notes.h"
 
 static int g_debug = 0;
 
@@ -220,22 +223,22 @@ static Chunk *new_chunk(Song *song, size_t nb_channels)
     return chunk;
 }
 
-static float note2freq(char note)
+static float char2freq(char c)
 {
-    static float freqs[12] = {32.7, 34.65, 36.71, 38.89, 41.2, 43.65, 46.25,
-        49., 51.91, 55., 58.27, 61.74};
-    float freq;
     size_t index;
-    if(note >= 'A' && note <= 'Z')
-        index = note - 'A';
-    else if(note >= 'a' && note <= 'z')
-        index = note - 'a' + 26;
-    else if(note >= '0' && note <= '9')
-        index = note - '0' + 26 + 26;
+    if(c >= 'A' && c <= 'Z')
+        index = c - 'A';
+    else if(c >= 'a' && c <= 'z')
+        index = c - 'a' + 26;
+    else if(c >= '0' && c <= '9')
+        index = c - '0' + 26 + 26;
     else
         return 0.f;
-    freq = freqs[index%12];
-    index /= 12;
+
+    enum note note = index % NOTES_RANGE;
+    float freq = note_to_frequency(note);
+
+    index /= NOTES_RANGE;
     while(index--)
         freq *= 2;
     return freq;
@@ -318,7 +321,7 @@ static Song *read_song(FILE *file)
                 channel->length = strlen(command.string.param);
                 channel->notes = malloc(sizeof(float) * channel->length);
                 for(i = 0; i < channel->length; i++)
-                    channel->notes[i] = note2freq(command.string.param[i]);
+                    channel->notes[i] = char2freq(command.string.param[i]);
                 if(g_debug)
                     fprintf(stderr, "%u notes read into channel %u\n",
                         channel->length, chunk->pos);
