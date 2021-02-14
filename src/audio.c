@@ -1,5 +1,11 @@
-#include <SDL/SDL.h>
 #include <math.h>
+
+#include <SDL/SDL.h>
+
+#include "instruments.h"
+#include "notes.h"
+#include "sdl_helpers.h"
+#include "values.h"
 
 static int g_debug = 0;
 
@@ -53,42 +59,15 @@ static void audio_callback(void *udata, Uint8 *stream, int len)
             if(chunk->channels[j]->length > chunk->pos)
             {
                 float freq = chunk->channels[j]->notes[chunk->pos];
-                float s;
-                switch(chunk->channels[j]->instrument)
-                {
-                case 0:
-                    s = ampl * sinf(M_PI*freq*pos/44100.f);
-                    break;
-                case 1:
-                    {
-                        float env = 1.f - pos/44100.f;
-                        env *= 1.f + 0.1f * sinf(10.f*M_PI*pos/44100.f);
-                        s = env * sinf(M_PI*freq*pos/44100.f);
-                    }
-                    break;
-                case 2:
-                    s = sinf(M_PI*freq*pos/44100.f) - 0.3f
-                      + sinf(2.f*M_PI*freq*pos/44100.f) * 0.2f
-                      + sinf(3.f*M_PI*freq*pos/44100.f) * 0.3f
-                      + sinf(4.f*M_PI*freq*pos/44100.f) * 0.2f;
-                    s *= sinf(M_PI*pos/44100.f);
-                    s *= 1.f + 0.1f * sinf(2.f*M_PI*pos/44100.f);
-                    s *= ampl;
-                    break;
-                case 3:
-                    s = fmodf(2.f*freq*pos/44100.f, 2);
-                    if(s > 1.f)
-                        s = 1.f - s;
-                    s -= .5f;
-                    break;
-                }
-                stream[i] += (int)(chunk->channels[j]->volume/2.f * s);
+                int index = chunk->channels[j]->instrument;
+                float s = instruments[index](freq, pos, ampl);
+                stream[i] += (Uint8)(chunk->channels[j]->volume/2.f * s);
             }
         }
-        ampl *= 0.9999;
+        ampl *= AMPL_REDUCTION;
 
         pos++;
-        if(pos >= 44100)
+        if(pos >= FREQUENCY)
         {
             ampl = 1.0;
             pos = 0;
@@ -190,7 +169,7 @@ static Channel *new_channel(void)
 {
     Channel *channel = malloc(sizeof(Channel));
     channel->instrument = 0;
-    channel->volume = 100;
+    channel->volume = BASE_VOLUME;
     channel->length = 0;
     channel->notes = NULL;
     return channel;
@@ -220,22 +199,25 @@ static Chunk *new_chunk(Song *song, size_t nb_channels)
     return chunk;
 }
 
-static float note2freq(char note)
+static float char2freq(char c)
 {
-    static float freqs[12] = {32.7, 34.65, 36.71, 38.89, 41.2, 43.65, 46.25,
-        49., 51.91, 55., 58.27, 61.74};
-    float freq;
     size_t index;
-    if(note >= 'A' && note <= 'Z')
-        index = note - 'A';
-    else if(note >= 'a' && note <= 'z')
-        index = note - 'a' + 26;
-    else if(note >= '0' && note <= '9')
-        index = note - '0' + 26 + 26;
+    if(c >= 'A' && c <= 'Z')
+        index = c - 'A';
+    else if(c >= 'a' && c <= 'z')
+        index = c - 'a' + 26;
+    else if(c >= '0' && c <= '9')
+        index = c - '0' + 26 + 26;
     else
         return 0.f;
-    freq = freqs[index%12];
-    index /= 12;
+
+    // We don't want to include the nothing.
+    size_t nb_notes = NOTES_RANGE - 1;
+
+    enum note note = index % nb_notes;
+    float freq = note_to_frequency(note);
+
+    index /= nb_notes;
     while(index--)
         freq *= 2;
     return freq;
@@ -318,7 +300,7 @@ static Song *read_song(FILE *file)
                 channel->length = strlen(command.string.param);
                 channel->notes = malloc(sizeof(float) * channel->length);
                 for(i = 0; i < channel->length; i++)
-                    channel->notes[i] = note2freq(command.string.param[i]);
+                    channel->notes[i] = char2freq(command.string.param[i]);
                 if(g_debug)
                     fprintf(stderr, "%u notes read into channel %u\n",
                         channel->length, chunk->pos);
@@ -350,7 +332,6 @@ static Song *read_song(FILE *file)
 
 int play(FILE *file, int debug)
 {
-    SDL_AudioSpec audiospec;
     Song *song = NULL;
 
     g_debug = debug;
@@ -360,23 +341,12 @@ int play(FILE *file, int debug)
     if(g_debug)
         fprintf(stderr, "Initializing SDL...\n");
 
-    SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER);
-    audiospec.freq = 44100;
-    audiospec.format = AUDIO_S16SYS;
-    audiospec.channels = 2;
-    audiospec.samples = 1024;
-    audiospec.callback = audio_callback;
-    audiospec.userdata = (void*)song;
-    if(SDL_OpenAudio(&audiospec, NULL) < 0)
+    int sdl_open_res = init_sdl_stream(audio_callback, (void*)song);
+    if(sdl_open_res < 0)
     {
         fprintf(stderr, "Unable to open audio context\n");
         return 1;
     }
-
-    if(g_debug)
-        fprintf(stderr, "Starting audio...\n");
-
-    SDL_PauseAudio(0);
 
     while(!song->ended)
         SDL_Delay(500);
@@ -384,7 +354,6 @@ int play(FILE *file, int debug)
     if(g_debug)
         fprintf(stderr, "Stopping audio and exiting gracefully\n");
 
-    SDL_CloseAudio();
-    SDL_Quit();
+    end_sdl_stream();
     return 0;
 }

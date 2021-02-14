@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int play(FILE *file, int debug);
+#include "audio.h"
 
 static void display_help(FILE *file)
 {
