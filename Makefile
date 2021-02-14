@@ -12,15 +12,25 @@ SONG_PLAYER_OBJ = src/audio.o       \
 
 SONG_PLAYER_BIN = song_player
 
+RT_PLAYER_OBJ = src/rt_note_player.o \
+                src/rt_player.o
+
+RT_PLAYER_BIN = rt_player
+
 SAMPLES_DIR = ./samples
 
-all: $(SONG_PLAYER_BIN)
+all: $(SONG_PLAYER_BIN) $(RT_PLAYER_BIN)
 
 $(SONG_PLAYER_BIN): $(COMMON_OBJ) $(SONG_PLAYER_OBJ)
 	$(CC) $(LDLIBS) $(COMMON_OBJ) $(SONG_PLAYER_OBJ) -o $(SONG_PLAYER_BIN)
 
+$(RT_PLAYER_BIN): $(COMMON_OBJ) $(RT_PLAYER_OBJ)
+	$(CC) $(LDLIBS) $(COMMON_OBJ) $(RT_PLAYER_OBJ) -o $(RT_PLAYER_BIN)
+
 clean:
-	$(RM) $(COMMON_OBJ) $(SONG_PLAYER_BIN) $(SONG_PLAYER_OBJ)
+	$(RM) $(COMMON_OBJ)
+	$(RM) $(SONG_PLAYER_BIN) $(SONG_PLAYER_OBJ)
+	$(RM) $(RT_PLAYER_BIN) $(RT_PLAYER_OBJ)
 
 tetris: $(SONG_PLAYER_BIN)
 	./$(SONG_PLAYER_BIN) $(SAMPLES_DIR)/tetris.txt

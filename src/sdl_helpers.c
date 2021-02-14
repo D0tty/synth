@@ -16,7 +16,11 @@ int init_sdl_stream(audio_callback_t callback, void* user_data)
     audiospec.callback = callback;
     audiospec.userdata = user_data;
 
-    return SDL_OpenAudio(&audiospec, NULL);
+    int sdl_open_res = SDL_OpenAudio(&audiospec, NULL);
+    if (sdl_open_res >= 0)
+        SDL_PauseAudio(0);
+
+    return sdl_open_res;
 }
 
 void end_sdl_stream(void)

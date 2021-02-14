@@ -169,7 +169,7 @@ static Channel *new_channel(void)
 {
     Channel *channel = malloc(sizeof(Channel));
     channel->instrument = 0;
-    channel->volume = 100;
+    channel->volume = BASE_VOLUME;
     channel->length = 0;
     channel->notes = NULL;
     return channel;
@@ -347,11 +347,6 @@ int play(FILE *file, int debug)
         fprintf(stderr, "Unable to open audio context\n");
         return 1;
     }
-
-    if(g_debug)
-        fprintf(stderr, "Starting audio...\n");
-
-    SDL_PauseAudio(0);
 
     while(!song->ended)
         SDL_Delay(500);
