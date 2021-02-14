@@ -210,10 +210,13 @@ static float char2freq(char c)
     else
         return 0.f;
 
-    enum note note = index % NOTES_RANGE;
+    // We don't want to include the nothing.
+    size_t nb_notes = NOTES_RANGE - 1;
+
+    enum note note = index % nb_notes;
     float freq = note_to_frequency(note);
 
-    index /= NOTES_RANGE;
+    index /= nb_notes;
     while(index--)
         freq *= 2;
     return freq;

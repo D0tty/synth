@@ -17,6 +17,8 @@ static const float frequencies[NOTES_RANGE] =
     [A]         = 55.f,
     [A_SHARP]   = 58.27f,
     [B]         = 61.74f,
+
+    [NOTHING]   = 0.f,
 };
 
 float note_to_frequency(enum note note)
