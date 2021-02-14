@@ -3,6 +3,7 @@
 #include <SDL/SDL.h>
 
 #include "notes.h"
+#include "sdl_helpers.h"
 
 static int g_debug = 0;
 
@@ -353,7 +354,6 @@ static Song *read_song(FILE *file)
 
 int play(FILE *file, int debug)
 {
-    SDL_AudioSpec audiospec;
     Song *song = NULL;
 
     g_debug = debug;
@@ -363,14 +363,8 @@ int play(FILE *file, int debug)
     if(g_debug)
         fprintf(stderr, "Initializing SDL...\n");
 
-    SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER);
-    audiospec.freq = 44100;
-    audiospec.format = AUDIO_S16SYS;
-    audiospec.channels = 2;
-    audiospec.samples = 1024;
-    audiospec.callback = audio_callback;
-    audiospec.userdata = (void*)song;
-    if(SDL_OpenAudio(&audiospec, NULL) < 0)
+    int sdl_open_res = init_sdl_stream(audio_callback, (void*)song);
+    if(sdl_open_res < 0)
     {
         fprintf(stderr, "Unable to open audio context\n");
         return 1;
@@ -387,7 +381,6 @@ int play(FILE *file, int debug)
     if(g_debug)
         fprintf(stderr, "Stopping audio and exiting gracefully\n");
 
-    SDL_CloseAudio();
-    SDL_Quit();
+    end_sdl_stream();
     return 0;
 }
