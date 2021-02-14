@@ -1,5 +1,5 @@
 CC = gcc
-CPPFLAGS = -Iinclude -D_GNU_SOURCE=1 -D_REENTRANT
+CPPFLAGS = -D_GNU_SOURCE=1 -D_REENTRANT
 CFLAGS = -g -pedantic -W -Wall -Wextra
 LDLIBS = -lSDL -lpthread -lm
 
